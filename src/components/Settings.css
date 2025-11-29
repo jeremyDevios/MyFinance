@@ -1,0 +1,132 @@
+.settings-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: flex-end;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.settings-panel {
+  width: 400px;
+  max-width: 100%;
+  background: #1e1e2e;
+  height: 100%;
+  overflow-y: auto;
+  animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #2a2a3e;
+}
+
+.settings-header h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.25rem;
+}
+
+.settings-header .close-button {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: color 0.2s ease;
+}
+
+.settings-header .close-button:hover {
+  color: #ffffff;
+}
+
+.settings-content {
+  padding: 1.5rem;
+}
+
+.setting-group {
+  margin-bottom: 2rem;
+}
+
+.setting-label {
+  display: block;
+  color: #ffffff;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.setting-description {
+  color: #888;
+  font-size: 0.875rem;
+  margin: 0 0 1rem 0;
+}
+
+.currency-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.currency-option {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  background: #252538;
+  border: 2px solid transparent;
+  padding: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.currency-option:hover {
+  background: #2a2a42;
+}
+
+.currency-option.selected {
+  border-color: #4CAF50;
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.currency-symbol {
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.currency-name {
+  color: #ffffff;
+}
+
+.currency-code {
+  color: #666;
+  font-size: 0.875rem;
+}

@@ -1,0 +1,132 @@
+.category-detail {
+  background: #1e1e2e;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.category-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #2a2a3e;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header-left .icon {
+  font-size: 1.5rem;
+}
+
+.header-left h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.25rem;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: color 0.2s ease;
+}
+
+.close-button:hover {
+  color: #ffffff;
+}
+
+.assets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.asset-item {
+  display: grid;
+  grid-template-columns: 1fr auto 150px;
+  gap: 1rem;
+  align-items: center;
+  background: #252538;
+  padding: 1rem;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.asset-item:hover {
+  background: #2a2a42;
+}
+
+.asset-name {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.asset-details {
+  display: flex;
+  gap: 1rem;
+  color: #888;
+  font-size: 0.875rem;
+}
+
+.detail-item.positive {
+  color: #4CAF50;
+}
+
+.detail-item.negative {
+  color: #f44336;
+}
+
+.asset-value {
+  text-align: right;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.category-total {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #2a2a3e;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .asset-item {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .asset-details {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .asset-value {
+    text-align: left;
+    font-size: 1.125rem;
+  }
+}

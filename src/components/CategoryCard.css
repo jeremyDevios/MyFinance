@@ -1,0 +1,70 @@
+.category-card {
+  background: #1e1e2e;
+  border-radius: 12px;
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.category-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border-color: var(--category-color);
+}
+
+.category-card.selected {
+  border-color: var(--category-color);
+  box-shadow: 0 0 20px rgba(var(--category-color), 0.3);
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.category-icon {
+  font-size: 1.5rem;
+}
+
+.category-name {
+  color: #a0a0a0;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.category-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0.75rem;
+}
+
+.category-meta {
+  display: flex;
+  justify-content: space-between;
+  color: #666;
+  font-size: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.percentage {
+  color: var(--category-color);
+  font-weight: 600;
+}
+
+.category-bar {
+  height: 4px;
+  background: #2a2a3e;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.category-bar-fill {
+  height: 100%;
+  background: var(--category-color);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}

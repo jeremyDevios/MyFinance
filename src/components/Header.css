@@ -67,6 +67,25 @@
   transform: rotate(45deg);
 }
 
+.logout-button {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: transform 0.2s ease;
+}
+
+.logout-button:hover {
+  transform: scale(1.1);
+}
+
+.user-email {
+  color: #a0a0b0;
+  font-size: 0.875rem;
+  margin-right: 0.5rem;
+}
+
 @media (max-width: 768px) {
   .app-header {
     padding: 1rem;
@@ -74,5 +93,9 @@
 
   .logo h1 {
     font-size: 1.25rem;
+  }
+  
+  .user-email {
+    display: none;
   }
 }

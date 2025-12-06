@@ -1,0 +1,16 @@
+.chart-container {
+  width: 100%;
+  height: 250px;
+  margin-top: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* Override Recharts default styles if needed */
+.recharts-cartesian-grid-horizontal line {
+  stroke: rgba(255, 255, 255, 0.1);
+}
+
+.recharts-tooltip-cursor {
+  stroke: rgba(255, 255, 255, 0.2);
+}

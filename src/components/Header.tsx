@@ -3,9 +3,11 @@ import './Header.css';
 
 interface HeaderProps {
   onSettingsClick: () => void;
+  onLogout?: () => void;
+  userEmail?: string | null;
 }
 
-export function Header({ onSettingsClick }: HeaderProps) {
+export function Header({ onSettingsClick, onLogout, userEmail }: HeaderProps) {
   const { currency, getSymbol } = useCurrency();
 
   return (
@@ -16,12 +18,18 @@ export function Header({ onSettingsClick }: HeaderProps) {
           <h1>MyFinance</h1>
         </div>
         <div className="header-actions">
+          {userEmail && <span className="user-email">{userEmail}</span>}
           <button className="currency-badge" onClick={onSettingsClick}>
             {getSymbol()} {currency}
           </button>
           <button className="settings-button" onClick={onSettingsClick} aria-label="Paramètres">
             ⚙️
           </button>
+          {onLogout && (
+            <button className="logout-button" onClick={onLogout} aria-label="Déconnexion">
+              🚪
+            </button>
+          )}
         </div>
       </div>
     </header>

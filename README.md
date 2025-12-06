@@ -13,6 +13,17 @@ Dashboard personnel de suivi financier, entièrement sous ton contrôle.
   - 🪙 **Crypto** : Bitcoin, Ethereum, Solana, etc.
   - 🏠 **Immobilier** : Appartements, maisons, locaux commerciaux
 
+## Aperçu
+
+### Dashboard Général
+![Dashboard](images/Dashboard.png)
+
+### Détail des Livrets (Épargne de précaution)
+![Livrets](images/Livrets.png)
+
+### Détail de la Bourse
+![Bourse](images/Bourse.png)
+
 ## Technologies
 
 - React 19

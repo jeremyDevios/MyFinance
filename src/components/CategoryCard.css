@@ -1,16 +1,38 @@
 .category-card {
   background: #1e1e2e;
-  border-radius: 12px;
-  padding: 1.25rem;
+  border-radius: 16px;
+  padding: 1.5rem;
   cursor: pointer;
-  transition: all 0.2s ease;
-  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.category-card.card-gradient-green {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(21, 128, 61, 0.15) 100%);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.category-card.card-gradient-red {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(185, 28, 28, 0.15) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .category-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  border-color: var(--category-color);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.category-card.card-gradient-green:hover {
+  border-color: rgba(34, 197, 94, 0.4);
+  box-shadow: 0 10px 20px rgba(34, 197, 94, 0.1);
+}
+
+.category-card.card-gradient-red:hover {
+  border-color: rgba(239, 68, 68, 0.4);
+  box-shadow: 0 10px 20px rgba(239, 68, 68, 0.1);
 }
 
 .category-card.selected {
@@ -21,31 +43,59 @@
 .category-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .category-icon {
   font-size: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
 }
 
 .category-name {
-  color: #a0a0a0;
-  font-size: 0.875rem;
-  font-weight: 500;
+  color: #a0a0b0;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .category-value {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: #ffffff;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.category-performance {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 1rem;
+}
+
+.perf-percent {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.perf-separator {
+  opacity: 0.3;
 }
 
 .category-meta {
   display: flex;
   justify-content: space-between;
-  color: #666;
+  color: #888;
   font-size: 0.75rem;
   margin-bottom: 0.75rem;
 }
@@ -57,7 +107,7 @@
 
 .category-bar {
   height: 4px;
-  background: #2a2a3e;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -66,5 +116,5 @@
   height: 100%;
   background: var(--category-color);
   border-radius: 2px;
-  transition: width 0.3s ease;
+  transition: width 1s ease-out;
 }

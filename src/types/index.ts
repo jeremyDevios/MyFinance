@@ -70,17 +70,21 @@ export interface BaseAsset {
   category: AssetCategory;
   valueInEur: number;
   lastUpdated: Date;
+  subGroup?: string; // e.g. PEA, CTO, Binance, Ledger, Bank Name
+  note?: string;
+  purchaseDate?: Date;
+  originalCurrency?: Currency;
 }
 
 export interface SavingsAccount extends BaseAsset {
   category: 'savings';
-  institution: string;
+  institution: string; // Can be same as subGroup
   interestRate: number;
 }
 
 export interface CurrentAccount extends BaseAsset {
   category: 'current_account';
-  institution: string;
+  institution: string; // Can be same as subGroup
   currency: Currency;
   originalValue: number;
 }
@@ -92,6 +96,8 @@ export interface StockAsset extends BaseAsset {
   purchasePrice: number;
   currentPrice: number;
   type: 'stock' | 'etf';
+  isListed?: boolean;
+  geography?: 'Monde' | 'Etats Unis' | 'Europe' | 'Asie' | 'Emergents' | 'Autre';
 }
 
 export interface CryptoAsset extends BaseAsset {

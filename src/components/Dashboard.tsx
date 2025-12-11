@@ -3,10 +3,9 @@ import { useAssets } from '../hooks/useAssets';
 import { usePrices } from '../hooks/usePrices';
 import { useCurrency } from '../hooks/useCurrency';
 import { CATEGORIES } from '../types';
-import type { AssetCategory, CategorySummary } from '../types';
+import type { AssetCategory, CategorySummary, Asset } from '../types';
 import { CategoryCard } from './CategoryCard';
 import { AddAssetModal } from './AddAssetModal';
-import { PatrimonyChart } from './PatrimonyChart';
 import { AllocationCharts } from './AllocationCharts';
 import './Dashboard.css';
 
@@ -21,17 +20,41 @@ export function Dashboard({ onCategorySelect, selectedCategory }: DashboardProps
   const { formatValue } = useCurrency();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
+  // Helper to calculate invested value
+  const getInvestedValue = (asset: Asset) => {
+    if (asset.category === 'stocks' || asset.category === 'crypto') {
+      const quantity = 'quantity' in asset ? (asset as any).quantity : 0;
+      const purchasePrice = 'purchasePrice' in asset ? (asset as any).purchasePrice : 0;
+      return quantity * purchasePrice;
+    }
+    if (asset.category === 'real_estate') {
+      return (asset as any).purchasePrice || 0;
+    }
+    
+    // For savings and current accounts, we consider them neutral (0% performance)
+    // So invested value equals current value
+    return asset.valueInEur;
+  };
+
   // Calculate real-time portfolio summary
   const portfolioSummary = useMemo(() => {
-    // Calculate total value with real-time prices
-    const totalValue = assets.reduce((sum, asset) => {
+    let totalValue = 0;
+    let totalInvested = 0;
+
+    // Calculate totals
+    assets.forEach(asset => {
+      // Current Value
+      let currentValue = asset.valueInEur;
       const price = prices[asset.id];
       if (price !== undefined && price !== null && ['stocks', 'crypto'].includes(asset.category)) {
         const quantity = 'quantity' in asset ? (asset as any).quantity : 0;
-        return sum + (price * quantity);
+        currentValue = price * quantity;
       }
-      return sum + asset.valueInEur;
-    }, 0);
+      totalValue += currentValue;
+
+      // Invested Value
+      totalInvested += getInvestedValue(asset);
+    });
 
     // Calculate category summaries
     const categoryTotals = Object.keys(CATEGORIES).reduce(
@@ -39,28 +62,42 @@ export function Dashboard({ onCategorySelect, selectedCategory }: DashboardProps
         const category = cat as AssetCategory;
         const categoryAssets = assets.filter((a) => a.category === category);
         
-        const categoryTotal = categoryAssets.reduce((sum, asset) => {
+        let catTotalValue = 0;
+        let catTotalInvested = 0;
+
+        categoryAssets.forEach(asset => {
+          // Current
+          let currentValue = asset.valueInEur;
           const price = prices[asset.id];
           if (price !== undefined && price !== null && ['stocks', 'crypto'].includes(asset.category)) {
             const quantity = 'quantity' in asset ? (asset as any).quantity : 0;
-            return sum + (price * quantity);
+            currentValue = price * quantity;
           }
-          return sum + asset.valueInEur;
-        }, 0);
+          catTotalValue += currentValue;
+
+          // Invested
+          catTotalInvested += getInvestedValue(asset);
+        });
         
         acc[category] = {
           category,
-          totalValue: categoryTotal,
+          totalValue: catTotalValue,
           assetCount: categoryAssets.length,
-          percentageOfTotal: totalValue > 0 ? (categoryTotal / totalValue) * 100 : 0,
+          percentageOfTotal: totalValue > 0 ? (catTotalValue / totalValue) * 100 : 0,
+          investedValue: catTotalInvested,
+          performance: catTotalValue - catTotalInvested,
+          performancePercent: catTotalInvested > 0 ? ((catTotalValue - catTotalInvested) / catTotalInvested) * 100 : 0
         };
         return acc;
       },
-      {} as Record<AssetCategory, CategorySummary>
+      {} as Record<AssetCategory, CategorySummary & { investedValue: number, performance: number, performancePercent: number }>
     );
 
     return {
       totalValue,
+      totalInvested,
+      performance: totalValue - totalInvested,
+      performancePercent: totalInvested > 0 ? ((totalValue - totalInvested) / totalInvested) * 100 : 0,
       categories: Object.values(categoryTotals),
       lastUpdated: new Date(),
     };
@@ -70,9 +107,16 @@ export function Dashboard({ onCategorySelect, selectedCategory }: DashboardProps
     return <div className="dashboard-loading">Chargement de vos finances...</div>;
   }
 
+  const isPositive = portfolioSummary.performance > 0;
+  const isNegative = portfolioSummary.performance < 0;
+  
+  let gradientClass = '';
+  if (isPositive) gradientClass = 'card-gradient-green';
+  else if (isNegative) gradientClass = 'card-gradient-red';
+
   return (
     <div className="dashboard">
-      <div className="total-patrimony">
+      <div className={`total-patrimony ${gradientClass}`}>
         <div className="total-patrimony-content">
           <div className="total-header">
             <span className="net-label">PATRIMOINE NET</span>
@@ -81,8 +125,17 @@ export function Dashboard({ onCategorySelect, selectedCategory }: DashboardProps
             </div>
           </div>
           <div className="total-value">{formatValue(portfolioSummary.totalValue)}</div>
+          
+          <div className="total-performance">
+            <span className="perf-percent">
+              {isPositive ? '+' : ''}{portfolioSummary.performancePercent.toFixed(1)}%
+            </span>
+            <span className="perf-separator">-</span>
+            <span className="perf-value">
+              {isPositive ? '+' : ''}{formatValue(portfolioSummary.performance)}
+            </span>
+          </div>
         </div>
-        <PatrimonyChart assets={assets} prices={prices} />
       </div>
 
       {portfolioSummary.totalValue > 0 && (
@@ -110,6 +163,8 @@ export function Dashboard({ onCategorySelect, selectedCategory }: DashboardProps
               categoryInfo={categoryInfo}
               summary={categorySummary}
               isSelected={selectedCategory === categorySummary.category}
+              performance={categorySummary.performance}
+              performancePercent={categorySummary.performancePercent}
               onClick={() =>
                 onCategorySelect(
                   selectedCategory === categorySummary.category

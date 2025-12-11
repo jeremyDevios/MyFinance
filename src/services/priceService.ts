@@ -22,13 +22,40 @@ export interface SearchResult {
   type?: string;
 }
 
+const fetchWithProxy = async (targetUrl: string) => {
+  // Try direct first
+  try {
+    const res = await fetch(targetUrl);
+    if (res.ok) return await res.json();
+  } catch (e) {
+    // Ignore
+  }
+
+  // Try corsproxy.io
+  try {
+    const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`);
+    if (res.ok) return await res.json();
+  } catch (e) {
+    // Ignore
+  }
+
+  // Try allorigins
+  try {
+    const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`);
+    if (res.ok) return await res.json();
+  } catch (e) {
+    // Ignore
+  }
+
+  throw new Error('All proxies failed');
+};
+
 export const priceService = {
   // Search Crypto (CoinGecko)
   async searchCrypto(query: string): Promise<SearchResult[]> {
     if (query.length < 2) return [];
     try {
-      const res = await fetch(`https://api.coingecko.com/api/v3/search?query=${query}`);
-      const data = await res.json();
+      const data = await fetchWithProxy(`https://api.coingecko.com/api/v3/search?query=${query}`);
       return (data.coins || []).slice(0, 10).map((coin: any) => ({
         symbol: coin.symbol,
         name: coin.name,
@@ -57,9 +84,11 @@ export const priceService = {
     }
   },
 
-  // Crypto prices using CoinGecko (Free, no key needed for simple usage)
+  // Crypto prices using Multiple Sources (CryptoCompare -> Coinbase -> CoinGecko)
   async getCryptoPrice(symbol: string): Promise<PriceResult> {
-    const cacheKey = `crypto_${symbol}`;
+    const cleanSymbol = symbol.toUpperCase();
+    const cacheKey = `crypto_${cleanSymbol}`;
+    
     if (priceCache[cacheKey] && Date.now() - priceCache[cacheKey].timestamp < CACHE_DURATION) {
       return { 
         price: priceCache[cacheKey].price,
@@ -67,9 +96,37 @@ export const priceService = {
       };
     }
 
+    // 1. Try CryptoCompare (Fast, CORS friendly, supports EUR)
+    try {
+      const res = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${cleanSymbol}&tsyms=EUR`);
+      const data = await res.json();
+      if (data.EUR) {
+        const price = data.EUR;
+        const metadata: StockMetadata = { currency: 'EUR', instrumentType: 'CRYPTOCURRENCY' };
+        priceCache[cacheKey] = { price, timestamp: Date.now(), metadata };
+        return { price, metadata };
+      }
+    } catch (e) {
+      console.warn('CryptoCompare failed, trying Coinbase...', e);
+    }
+
+    // 2. Try Coinbase (Reliable, USD)
+    try {
+      const res = await fetch(`https://api.coinbase.com/v2/prices/${cleanSymbol}-USD/spot`);
+      const data = await res.json();
+      if (data.data && data.data.amount) {
+        const price = parseFloat(data.data.amount);
+        const metadata: StockMetadata = { currency: 'USD', instrumentType: 'CRYPTOCURRENCY' };
+        priceCache[cacheKey] = { price, timestamp: Date.now(), metadata };
+        return { price, metadata };
+      }
+    } catch (e) {
+      console.warn('Coinbase failed, trying CoinGecko...', e);
+    }
+
+    // 3. Fallback to CoinGecko (Rate limited, needs proxy)
     try {
       // First, we need to find the CoinGecko ID for the symbol
-      // This is a simplified mapping. In a real app, we might search or maintain a larger map.
       const idMap: Record<string, string> = {
         'BTC': 'bitcoin',
         'ETH': 'ethereum',
@@ -85,12 +142,11 @@ export const priceService = {
         'BNB': 'binancecoin'
       };
 
-      let id = idMap[symbol.toUpperCase()];
+      let id = idMap[cleanSymbol];
       
       // If not in map, try to search (this might be rate limited)
       if (!id) {
-        const searchRes = await fetch(`https://api.coingecko.com/api/v3/search?query=${symbol}`);
-        const searchData = await searchRes.json();
+        const searchData = await fetchWithProxy(`https://api.coingecko.com/api/v3/search?query=${cleanSymbol}`);
         if (searchData.coins && searchData.coins.length > 0) {
           id = searchData.coins[0].id;
         }
@@ -98,8 +154,7 @@ export const priceService = {
 
       if (!id) return { price: null, error: 'Symbol not found' };
 
-      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=eur`);
-      const data = await res.json();
+      const data = await fetchWithProxy(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=eur`);
       
       if (data[id] && data[id].eur) {
         const price = data[id].eur;
@@ -195,70 +250,84 @@ export const priceService = {
     }
 
     // Helper to fetch from Yahoo Chart API (v8) - Reliable for Price, no crumb needed usually
-    const fetchChart = async (proxyBase: string, isRaw = false) => {
+    const fetchChart = async () => {
       const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`;
-      const url = isRaw ? `${proxyBase}${encodeURIComponent(targetUrl)}` : `${proxyBase}${targetUrl}`;
       
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`Chart Proxy error ${res.status}`);
-      
-      const data = await res.json();
-      const json = (data.contents && typeof data.contents === 'string') ? JSON.parse(data.contents) : data;
-      
-      const result = json.chart?.result?.[0];
-      if (!result || !result.meta || !result.meta.regularMarketPrice) throw new Error('No data in chart response');
+      // List of proxies to try
+      const proxies = [
+        { url: (u: string) => `https://corsproxy.io/?${encodeURIComponent(u)}`, isRaw: false },
+        { url: (u: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`, isRaw: true },
+        { url: (u: string) => `https://thingproxy.freeboard.io/fetch/${u}`, isRaw: false }
+      ];
 
-      return {
-        price: result.meta.regularMarketPrice,
-        currency: result.meta.currency,
-        exchangeTimezoneName: result.meta.exchangeTimezoneName,
-        exchangeName: result.meta.exchangeName,
-        instrumentType: result.meta.instrumentType
-      };
+      for (const proxy of proxies) {
+        try {
+          const url = proxy.url(targetUrl);
+          const res = await fetch(url);
+          if (!res.ok) continue;
+          
+          const data = await res.json();
+          const json = (data.contents && typeof data.contents === 'string') ? JSON.parse(data.contents) : data;
+          
+          const result = json.chart?.result?.[0];
+          if (!result || !result.meta || !result.meta.regularMarketPrice) continue;
+
+          return {
+            price: result.meta.regularMarketPrice,
+            currency: result.meta.currency,
+            exchangeTimezoneName: result.meta.exchangeTimezoneName,
+            exchangeName: result.meta.exchangeName,
+            instrumentType: result.meta.instrumentType
+          };
+        } catch (e) {
+          // Try next proxy
+        }
+      }
+      throw new Error('All proxies failed for Yahoo Chart');
     };
 
     // Helper to fetch from Yahoo Search API (v1) - Reliable for Name, no crumb needed usually
-    const fetchSearch = async (proxyBase: string, isRaw = false) => {
+    const fetchSearch = async () => {
       const targetUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${ticker}&quotesCount=1&newsCount=0`;
-      const url = isRaw ? `${proxyBase}${encodeURIComponent(targetUrl)}` : `${proxyBase}${targetUrl}`;
       
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`Search Proxy error ${res.status}`);
-      
-      const data = await res.json();
-      const json = (data.contents && typeof data.contents === 'string') ? JSON.parse(data.contents) : data;
-      
-      const result = json.quotes?.[0];
-      if (!result) throw new Error('No data in search response');
+      const proxies = [
+        { url: (u: string) => `https://corsproxy.io/?${encodeURIComponent(u)}`, isRaw: false },
+        { url: (u: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`, isRaw: true }
+      ];
 
-      return {
-        longName: result.longname || result.shortname || result.symbol,
-        type: result.quoteType
-      };
+      for (const proxy of proxies) {
+        try {
+          const url = proxy.url(targetUrl);
+          const res = await fetch(url);
+          if (!res.ok) continue;
+          
+          const data = await res.json();
+          const json = (data.contents && typeof data.contents === 'string') ? JSON.parse(data.contents) : data;
+          
+          const result = json.quotes?.[0];
+          if (result) {
+            return {
+              longName: result.longname || result.shortname || result.symbol,
+              type: result.quoteType
+            };
+          }
+        } catch (e) {
+          // Try next proxy
+        }
+      }
+      throw new Error('All proxies failed for Yahoo Search');
     };
 
     try {
       // 1. Get Price (Essential)
-      // Try allorigins first as it handles CORS well for JSON
-      let priceData;
-      try {
-        priceData = await fetchChart('https://api.allorigins.win/raw?url=', true);
-      } catch (e) {
-        // Fallback to corsproxy
-        priceData = await fetchChart('https://corsproxy.io/?', false);
-      }
+      const priceData = await fetchChart();
 
       // 2. Get Metadata (Optional but desired for Name)
       let searchData = { longName: ticker, type: '' };
       try {
-        // Try allorigins first
-        searchData = await fetchSearch('https://api.allorigins.win/raw?url=', true);
+        searchData = await fetchSearch();
       } catch (e) {
-        try {
-           searchData = await fetchSearch('https://corsproxy.io/?', false);
-        } catch (e2) {
-           console.warn('Metadata search failed, using ticker as name');
-        }
+         console.warn('Metadata search failed, using ticker as name');
       }
 
       const metadata: StockMetadata = {

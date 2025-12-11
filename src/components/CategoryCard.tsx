@@ -6,15 +6,24 @@ interface CategoryCardProps {
   categoryInfo: CategoryInfo;
   summary: CategorySummary;
   isSelected: boolean;
+  performance?: number;
+  performancePercent?: number;
   onClick: () => void;
 }
 
-export function CategoryCard({ categoryInfo, summary, isSelected, onClick }: CategoryCardProps) {
+export function CategoryCard({ categoryInfo, summary, isSelected, performance = 0, performancePercent = 0, onClick }: CategoryCardProps) {
   const { formatValue } = useCurrency();
+  
+  const isPositive = performance > 0;
+  const isNegative = performance < 0;
+
+  let gradientClass = '';
+  if (isPositive) gradientClass = 'card-gradient-green';
+  else if (isNegative) gradientClass = 'card-gradient-red';
 
   return (
     <div
-      className={`category-card ${isSelected ? 'selected' : ''}`}
+      className={`category-card ${isSelected ? 'selected' : ''} ${gradientClass}`}
       onClick={onClick}
       style={{ '--category-color': categoryInfo.color } as React.CSSProperties}
     >
@@ -23,6 +32,17 @@ export function CategoryCard({ categoryInfo, summary, isSelected, onClick }: Cat
         <span className="category-name">{categoryInfo.name}</span>
       </div>
       <div className="category-value">{formatValue(summary.totalValue)}</div>
+      
+      <div className="category-performance">
+        <span className="perf-percent">
+          {isPositive ? '+' : ''}{performancePercent.toFixed(1)}%
+        </span>
+        <span className="perf-separator">-</span>
+        <span className="perf-value">
+          {isPositive ? '+' : ''}{formatValue(performance)}
+        </span>
+      </div>
+
       <div className="category-meta">
         <span className="asset-count">{summary.assetCount} actif(s)</span>
         <span className="percentage">{summary.percentageOfTotal.toFixed(1)}%</span>

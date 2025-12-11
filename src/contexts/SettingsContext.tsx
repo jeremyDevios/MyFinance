@@ -14,7 +14,7 @@ interface SettingsContextType {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 // Simple obfuscation key
-const XOR_KEY = "MyFinanceSecretKey2025";
+const XOR_KEY = import.meta.env.VITE_APP_SECRET_KEY || "DefaultSecretKey";
 
 const encrypt = (text: string) => {
   if (!text) return '';

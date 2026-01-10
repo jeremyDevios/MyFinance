@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { useCurrency } from '../hooks/useCurrency';
 import type { Asset } from '../types';
@@ -13,6 +13,15 @@ interface AllocationChartsProps {
 
 export function AllocationCharts({ assets, prices, metadata = {} }: AllocationChartsProps) {
   const { formatValue } = useCurrency();
+  const [shouldAnimate, setShouldAnimate] = useState(true);
+
+  useEffect(() => {
+    // Disable animation after initial render animation completes
+    const timer = setTimeout(() => {
+      setShouldAnimate(false);
+    }, 1500); // Recharts default animation is usually ~1s-1.5s
+    return () => clearTimeout(timer);
+  }, []);
 
   // Helper to get current value of an asset
   const getAssetValue = (asset: Asset) => {
@@ -131,85 +140,28 @@ export function AllocationCharts({ assets, prices, metadata = {} }: AllocationCh
 
       const value = getAssetValue(asset);
       
-      // Check for manual geography override first
-      if ('geography' in asset && (asset as any).geography && (asset as any).geography !== 'Inconnue') {
-        const manualGeo = (asset as any).geography;
-        if ((distribution as any)[manualGeo]) {
-          (distribution as any)[manualGeo].value += value;
-          (distribution as any)[manualGeo].assets.push(asset.name);
-          return;
-        }
-      }
-
-      // For Stocks/ETFs, use Metadata
-      const meta = metadata[asset.id];
-      let region = 'Inconnue';
-
-      // Try to determine region from Name (Metadata or Asset Name)
-      const name = (meta?.longName || asset.name || '').toLowerCase();
+      // Use manual geography or default to 'Monde'
+      let region = (asset as any).geography || 'Monde';
       
-      if (name.includes('world') || name.includes('monde') || name.includes('msci world') || name.includes('global') || name.includes('acwi') || name.includes('all country')) {
+      // Handle legacy value
+      if (region === 'Automatique') {
         region = 'Monde';
-      } else if (name.includes('asia') || name.includes('asie') || name.includes('pacific') || name.includes('pacifique') || name.includes('japan') || name.includes('japon') || name.includes('china') || name.includes('chine') || name.includes('emerging') || name.includes('émergents') || name.includes(' em ') || name.includes(' ex jap')) {
-        region = 'Asie';
-      } else if (name.includes('usa') || name.includes('etats-unis') || name.includes('s&p') || name.includes('nasdaq') || name.includes('dow jones') || name.includes('us treasury') || name.includes('russell')) {
-        region = 'Etats Unis';
-      } else if (name.includes('europe') || name.includes('stoxx') || name.includes('cac 40') || name.includes('cac40') || name.includes('dax') || name.includes('ftse') || name.includes('euro')) {
-        region = 'Europe';
-      } else {
-        // Fallback logic
-        let determined = false;
-
-        // Check for Commodities/Precious Metals -> Inconnue
-        if (name.includes('gold') || name.includes(' or ') || name.includes('silver') || name.includes('metal') || name.includes('physical') || name.includes('commodity')) {
-          region = 'Inconnue';
-          determined = true;
-        }
-
-        if (!determined && meta) {
-          const type = (meta.instrumentType || '').toUpperCase();
-          const isEquity = type === 'EQUITY';
-          
-          // If it's an Equity (Company), we can generally trust the listing location
-          if (isEquity) {
-            const tz = meta.exchangeTimezoneName || '';
-            const curr = meta.currency || '';
-
-            if (tz.includes('New_York') || tz.includes('America') || curr === 'USD') {
-              region = 'Etats Unis';
-            } else if (tz.includes('Europe') || tz.includes('Paris') || tz.includes('Berlin') || tz.includes('London') || tz.includes('Amsterdam') || curr === 'EUR' || curr === 'GBP' || curr === 'CHF') {
-              region = 'Europe';
-            } else if (tz.includes('Asia') || tz.includes('Tokyo') || tz.includes('Hong_Kong') || tz.includes('Shanghai') || curr === 'JPY' || curr === 'CNY' || curr === 'HKD') {
-              region = 'Asie';
-            }
-          }
-          // If it's an ETF/Fund and we haven't matched a name region yet, default to Inconnue
-          // (Avoids classifying Gold ETCs as Europe just because they list in Paris)
-        } 
-        
-        // Final fallback for items without metadata or unmatched Equities
-        if (!determined && region === 'Inconnue') {
-           // Only guess US if it's very clear
-           let ticker = '';
-           if ('ticker' in asset) ticker = (asset as any).ticker;
-           
-           if (ticker.endsWith('.US')) {
-             region = 'Etats Unis';
-           }
-           // Do NOT default to Europe for .PA/.DE etc as it might be an ETF
-        }
       }
 
       if ((distribution as any)[region]) {
         (distribution as any)[region].value += value;
         (distribution as any)[region].assets.push(asset.name);
+      } else {
+        // Fallback
+        distribution['Autre'].value += value;
+        distribution['Autre'].assets.push(asset.name);
       }
     });
 
     return Object.entries(distribution)
       .filter(([_, data]) => data.value > 0)
       .map(([name, data]) => ({ name, value: data.value, assets: data.assets }));
-  }, [assets, prices, metadata]);
+  }, [assets, prices]);
 
   const COLORS = {
     'Cash': ['#4CAF50', '#81C784'],
@@ -277,6 +229,7 @@ export function AllocationCharts({ assets, prices, metadata = {} }: AllocationCh
               paddingAngle={5}
               dataKey="value"
               stroke="none"
+              isAnimationActive={shouldAnimate}
             >
               {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={`url(#gradient-${entry.name})`} />

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAssets } from '../hooks/useAssets';
 import { priceService, type SearchResult } from '../services/priceService';
+import { exchangeRates } from '../data/sampleData';
 import { useSettings } from '../contexts/SettingsContext';
 import { CATEGORIES, CURRENCIES } from '../types';
 import type { AssetCategory, Currency, Asset } from '../types';
@@ -144,9 +145,9 @@ export function AddAssetModal({ isOpen, onClose, initialAsset }: AddAssetModalPr
 
         // Handle geography
         if ('geography' in initialAsset) {
-          setGeography((initialAsset as any).geography);
+          setGeography((initialAsset as any).geography || 'Monde');
         } else {
-          setGeography('Automatique');
+          setGeography('Monde');
         }
 
         // Handle date
@@ -178,7 +179,7 @@ export function AddAssetModal({ isOpen, onClose, initialAsset }: AddAssetModalPr
         setNote('');
         setInterestRate('');
         setIsListed(true);
-        setGeography('Automatique');
+        setGeography('Monde');
       }
       setError(null);
     }
@@ -215,9 +216,8 @@ export function AddAssetModal({ isOpen, onClose, initialAsset }: AddAssetModalPr
         currentPriceNum = parseFloat(currentPriceInput);
       }
       
-      // Simple conversion rate mock (should be real API)
-      const rates: Record<string, number> = { EUR: 1, USD: 0.92, GBP: 1.17, CHF: 1.05, JPY: 0.006 };
-      const rate = rates[currency] || 1;
+      // Use centralized exchange rates
+      const rate = exchangeRates[currency] || 1;
       const valueInEur = currentPriceNum * quantityNum * rate;
 
       // Use provided name or fallback to ticker/symbol if empty
@@ -245,7 +245,7 @@ export function AddAssetModal({ isOpen, onClose, initialAsset }: AddAssetModalPr
           currentPrice: currentPriceNum,
           type: 'stock', // Default
           isListed: isListed,
-          geography: geography !== 'Automatique' ? geography : undefined,
+          geography: geography,
         };
       } else if (category === 'crypto') {
         assetData = {
@@ -482,7 +482,6 @@ export function AddAssetModal({ isOpen, onClose, initialAsset }: AddAssetModalPr
                 value={geography} 
                 onChange={(e) => setGeography(e.target.value)}
               >
-                <option value="Automatique">Automatique (Selon métadonnées)</option>
                 <option value="Monde">Monde</option>
                 <option value="Etats Unis">Etats Unis</option>
                 <option value="Europe">Europe</option>

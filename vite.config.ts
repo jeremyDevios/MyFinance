@@ -6,8 +6,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: true,
-    port: 3001,
-    allowedHosts: ["orangepijerem.duckdns.org", "myfinance.zikkis.fr"]
+    port: 8090,
+    allowedHosts: ["finance.zikkis.fr"]
   },
   optimizeDeps: {
     exclude: ['lucide-react'],

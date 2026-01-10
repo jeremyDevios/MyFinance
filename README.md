@@ -30,6 +30,21 @@ Dashboard personnel de suivi financier, entièrement sous ton contrôle.
 - TypeScript
 - Vite 7
 
+## Configuration
+
+Ce projet utilise des variables d'environnement pour la configuration Firebase et la sécurité.
+Avant de lancer le projet, vous devez créer un fichier `.env` à la racine du projet avec les clés suivantes :
+
+```env
+VITE_FIREBASE_API_KEY=votre_api_key
+VITE_FIREBASE_AUTH_DOMAIN=votre_projet.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=votre_projet_id
+VITE_FIREBASE_STORAGE_BUCKET=votre_projet.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=votre_sender_id
+VITE_FIREBASE_APP_ID=votre_app_id
+VITE_APP_SECRET_KEY=votre_cle_secrete_locale
+```
+
 ## Démarrage
 
 ```bash

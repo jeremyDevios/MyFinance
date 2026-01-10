@@ -202,5 +202,5 @@ export const exchangeRates: Record<string, number> = {
   USD: 0.918,
   GBP: 1.165,
   CHF: 1.045,
-  JPY: 0.0062,
+  JPY: 0.00548,
 };

@@ -3,6 +3,7 @@ import { onAuthStateChanged, type User, signOut } from 'firebase/auth';
 import { auth } from './firebaseConfig';
 import { CurrencyProvider } from './contexts/CurrencyContext';
 import { SettingsProvider } from './contexts/SettingsContext';
+import { PriceProvider } from './contexts/PriceContext';
 import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
 import { CategoryDetail } from './components/CategoryDetail';
@@ -91,28 +92,30 @@ function App() {
   return (
     <SettingsProvider>
       <CurrencyProvider>
-        <div className="app">
-          <Header 
-            onSettingsClick={() => setSettingsOpen(true)} 
-            onLogout={handleLogout}
-            userEmail={user.email}
-          />
-          <main className="main-content">
-            <Dashboard
-              onCategorySelect={setSelectedCategory}
-              selectedCategory={selectedCategory}
+        <PriceProvider>
+          <div className="app">
+            <Header 
+              onSettingsClick={() => setSettingsOpen(true)} 
+              onLogout={handleLogout}
+              userEmail={user.email}
             />
-            <div id="category-detail-section">
-              {selectedCategory && (
-                <CategoryDetail
-                  category={selectedCategory}
-                  onClose={() => setSelectedCategory(null)}
-                />
-              )}
-            </div>
-          </main>
-          <Settings isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
-        </div>
+            <main className="main-content">
+              <Dashboard
+                onCategorySelect={setSelectedCategory}
+                selectedCategory={selectedCategory}
+              />
+              <div id="category-detail-section">
+                {selectedCategory && (
+                  <CategoryDetail
+                    category={selectedCategory}
+                    onClose={() => setSelectedCategory(null)}
+                  />
+                )}
+              </div>
+            </main>
+            <Settings isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+          </div>
+        </PriceProvider>
       </CurrencyProvider>
     </SettingsProvider>
   );

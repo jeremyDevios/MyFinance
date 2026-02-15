@@ -9,9 +9,10 @@ interface CategoryCardProps {
   performance?: number;
   performancePercent?: number;
   onClick: () => void;
+  isLoading?: boolean;
 }
 
-export function CategoryCard({ categoryInfo, summary, isSelected, performance = 0, performancePercent = 0, onClick }: CategoryCardProps) {
+export function CategoryCard({ categoryInfo, summary, isSelected, performance = 0, performancePercent = 0, onClick, isLoading = false }: CategoryCardProps) {
   const { formatValue } = useCurrency();
   
   const isPositive = performance > 0;
@@ -30,6 +31,12 @@ export function CategoryCard({ categoryInfo, summary, isSelected, performance = 
       <div className="category-header">
         <span className="category-icon">{categoryInfo.icon}</span>
         <span className="category-name">{categoryInfo.name}</span>
+        {isLoading && (
+          <div className="loading-indicator">
+            <span className="hourglass">⏳</span>
+            <span className="loading-text">Chargement...</span>
+          </div>
+        )}
       </div>
       <div className="category-value">{formatValue(summary.totalValue)}</div>
       

@@ -17,7 +17,7 @@ interface DashboardProps {
 
 export function Dashboard({ onCategorySelect, selectedCategory }: DashboardProps) {
   const { assets, loading } = useAssets();
-  const { prices, metadata } = usePrices(assets);
+  const { prices, metadata, loading: pricesLoading } = usePrices(assets);
   const { formatValue, exchangeRates } = useCurrency();
   const { patrimonyGoal } = useSettings();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -134,7 +134,15 @@ export function Dashboard({ onCategorySelect, selectedCategory }: DashboardProps
       <div className={`total-patrimony ${gradientClass}`}>
         <div className="total-patrimony-content">
           <div className="total-header">
-            <span className="net-label">PATRIMOINE</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <span className="net-label">PATRIMOINE</span>
+              {pricesLoading && (
+                <div className="loading-indicator">
+                  <span className="hourglass">⏳</span>
+                  <span className="loading-text">Chargement...</span>
+                </div>
+              )}
+            </div>
             <div className="last-updated">
               Mise à jour: {portfolioSummary.lastUpdated.toLocaleDateString('fr-FR')}
             </div>
@@ -193,6 +201,7 @@ export function Dashboard({ onCategorySelect, selectedCategory }: DashboardProps
               isSelected={selectedCategory === categorySummary.category}
               performance={categorySummary.performance}
               performancePercent={categorySummary.performancePercent}
+              isLoading={pricesLoading && categorySummary.category === 'crypto' && categorySummary.assetCount > 0}
               onClick={() =>
                 onCategorySelect(
                   selectedCategory === categorySummary.category

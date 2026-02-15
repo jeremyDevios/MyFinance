@@ -119,3 +119,42 @@
   border-radius: 2px;
   transition: width 1s ease-out;
 }
+
+/* Loading Indicator */
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hourglass {
+  display: inline-block;
+  font-size: 1rem;
+  animation: hourglass-spin 3s ease-in-out infinite;
+}
+
+@keyframes hourglass-spin {
+  0% { transform: rotate(0deg); }
+  40% { transform: rotate(0deg); }
+  50% { transform: rotate(180deg); }
+  90% { transform: rotate(180deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  color: #fbbf24;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  animation: text-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes text-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

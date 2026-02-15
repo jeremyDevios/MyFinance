@@ -7,7 +7,7 @@ export function usePrices(assets: Asset[]) {
   const [prices, setPrices] = useState<Record<string, number | null>>({});
   const [metadata, setMetadata] = useState<Record<string, StockMetadata>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start as loading until first fetch
   const { finnhubApiKey } = useSettings();
 
   // Create a stable key for assets to prevent infinite loops
@@ -75,6 +75,8 @@ export function usePrices(assets: Asset[]) {
       // Refresh prices every 10 seconds
       const intervalId = setInterval(fetchPrices, 10000);
       return () => clearInterval(intervalId);
+    } else {
+      setLoading(false);
     }
   }, [assetsKey, finnhubApiKey]); // Use stable key instead of assets array
 

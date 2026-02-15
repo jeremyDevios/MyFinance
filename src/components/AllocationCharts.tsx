@@ -12,7 +12,7 @@ interface AllocationChartsProps {
 }
 
 export function AllocationCharts({ assets, prices, metadata = {} }: AllocationChartsProps) {
-  const { formatValue } = useCurrency();
+  const { formatValue, exchangeRates } = useCurrency();
   const [shouldAnimate, setShouldAnimate] = useState(true);
 
   useEffect(() => {
@@ -22,12 +22,23 @@ export function AllocationCharts({ assets, prices, metadata = {} }: AllocationCh
     }, 1500); // Recharts default animation is usually ~1s-1.5s
     return () => clearTimeout(timer);
   }, []);
+  
+  // Helper to get price in EUR
+  const getPriceInEur = (assetId: string, price: number) => {
+    const meta = metadata?.[assetId];
+    if (meta?.currency && meta.currency !== 'EUR') {
+      const rate = exchangeRates[meta.currency];
+      if (rate) return price * rate;
+    }
+    return price;
+  };
 
   // Helper to get current value of an asset
   const getAssetValue = (asset: Asset) => {
     if (['stocks', 'crypto'].includes(asset.category) && prices[asset.id]) {
       const quantity = 'quantity' in asset ? (asset as any).quantity : 0;
-      return quantity * prices[asset.id]!;
+      const eurPrice = getPriceInEur(asset.id, prices[asset.id]!);
+      return quantity * eurPrice;
     }
     return asset.valueInEur;
   };

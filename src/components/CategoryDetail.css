@@ -1,9 +1,11 @@
 .category-detail {
-  background: #1e1e2e;
-  border-radius: 16px;
+  background: var(--bg-secondary);
+  border-radius: 24px;
   padding: 1.5rem;
   margin-top: 2rem;
   animation: slideIn 0.3s ease;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow);
 }
 
 @keyframes slideIn {
@@ -23,7 +25,7 @@
   align-items: center;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #2a2a3e;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .header-left {
@@ -38,14 +40,14 @@
 
 .header-left h2 {
   margin: 0;
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 1.25rem;
 }
 
 .close-button {
   background: none;
   border: none;
-  color: #666;
+  color: var(--text-secondary);
   font-size: 1.25rem;
   cursor: pointer;
   padding: 0.5rem;
@@ -53,14 +55,15 @@
 }
 
 .close-button:hover {
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .asset-group {
   margin-bottom: 1.5rem;
-  background: #252538;
+  background: var(--bg-tertiary);
   border-radius: 12px;
   overflow: hidden;
+  border: 1px solid var(--border-color);
 }
 
 .group-header {
@@ -68,19 +71,19 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  background: #2a2a42;
-  border-bottom: 1px solid #3a3a4e;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .group-header h3 {
   margin: 0;
   font-size: 1rem;
-  color: #a0a0b0;
+  color: var(--text-secondary);
   font-weight: 600;
 }
 
 .group-total {
-  color: #ffffff;
+  color: var(--text-primary);
   font-weight: 600;
 }
 
@@ -95,7 +98,7 @@
   gap: 1rem;
   align-items: center;
   padding: 1rem;
-  border-bottom: 1px solid #2a2a3e;
+  border-bottom: 1px solid var(--border-color);
   transition: background 0.2s ease;
 }
 
@@ -161,9 +164,38 @@
 
 .asset-details {
   display: flex;
-  gap: 1rem;
+  gap: 2rem;
   color: #888;
   font-size: 0.875rem;
+  align-items: center;
+}
+
+.col-quantity {
+  min-width: 80px;
+  color: #e0e0e0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.col-price {
+  min-width: 100px;
+}
+
+.col-perf {
+  min-width: 70px;
+  text-align: right;
+}
+
+.col-gain {
+  min-width: 110px;
+  text-align: right;
 }
 
 .detail-item.positive {
@@ -192,10 +224,16 @@
 }
 
 .price-tag {
-  background-color: rgba(100, 108, 255, 0.1);
-  color: #646cff;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
+  color: var(--accent-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: rgba(255, 159, 10, 0.15);
+  border: 1px solid rgba(255, 159, 10, 0.3);
+  padding: 4px 12px;
+  border-radius: 12px;
+}  border-radius: 4px;
   font-weight: 600;
 }
 

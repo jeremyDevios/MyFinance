@@ -1,6 +1,8 @@
 .app-header {
-  background: #1a1a2e;
-  border-bottom: 1px solid #2a2a3e;
+  background: rgba(28, 28, 30, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-color);
   padding: 1rem 2rem;
   position: sticky;
   top: 0;
@@ -23,13 +25,14 @@
 
 .logo-icon {
   font-size: 1.5rem;
+  color: var(--accent-primary);
 }
 
 .logo h1 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .header-actions {
@@ -39,14 +42,19 @@
 }
 
 .currency-badge {
-  background: #252538;
-  border: 1px solid #3a3a4e;
-  color: #ffffff;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
   padding: 0.5rem 1rem;
   border-radius: 20px;
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+.currency-badge:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
 }
 
 .currency-badge:hover {

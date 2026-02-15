@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useAssets } from '../hooks/useAssets';
 import { usePrices } from '../hooks/usePrices';
 import { useCurrency } from '../hooks/useCurrency';
+import { useSettings } from '../contexts/SettingsContext';
 import { CATEGORIES } from '../types';
 import type { AssetCategory, CategorySummary, Asset } from '../types';
 import { CategoryCard } from './CategoryCard';
@@ -17,8 +18,19 @@ interface DashboardProps {
 export function Dashboard({ onCategorySelect, selectedCategory }: DashboardProps) {
   const { assets, loading } = useAssets();
   const { prices, metadata } = usePrices(assets);
-  const { formatValue } = useCurrency();
+  const { formatValue, exchangeRates } = useCurrency();
+  const { patrimonyGoal } = useSettings();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // Helper to get price in EUR
+  const getPriceInEur = (assetId: string, price: number) => {
+    const meta = metadata?.[assetId];
+    if (meta?.currency && meta.currency !== 'EUR') {
+      const rate = exchangeRates[meta.currency];
+      if (rate) return price * rate;
+    }
+    return price;
+  };
 
   // Helper to calculate invested value
   const getInvestedValue = (asset: Asset) => {
@@ -48,7 +60,8 @@ export function Dashboard({ onCategorySelect, selectedCategory }: DashboardProps
       const price = prices[asset.id];
       if (price !== undefined && price !== null && ['stocks', 'crypto'].includes(asset.category)) {
         const quantity = 'quantity' in asset ? (asset as any).quantity : 0;
-        currentValue = price * quantity;
+        const eurPrice = getPriceInEur(asset.id, price);
+        currentValue = eurPrice * quantity;
       }
       totalValue += currentValue;
 
@@ -71,7 +84,8 @@ export function Dashboard({ onCategorySelect, selectedCategory }: DashboardProps
           const price = prices[asset.id];
           if (price !== undefined && price !== null && ['stocks', 'crypto'].includes(asset.category)) {
             const quantity = 'quantity' in asset ? (asset as any).quantity : 0;
-            currentValue = price * quantity;
+            const eurPrice = getPriceInEur(asset.id, price);
+            currentValue = eurPrice * quantity;
           }
           catTotalValue += currentValue;
 
@@ -109,6 +123,7 @@ export function Dashboard({ onCategorySelect, selectedCategory }: DashboardProps
 
   const isPositive = portfolioSummary.performance > 0;
   const isNegative = portfolioSummary.performance < 0;
+  const progressPercent = Math.min((portfolioSummary.totalValue / patrimonyGoal) * 100, 100);
   
   let gradientClass = '';
   if (isPositive) gradientClass = 'card-gradient-green';
@@ -119,7 +134,7 @@ export function Dashboard({ onCategorySelect, selectedCategory }: DashboardProps
       <div className={`total-patrimony ${gradientClass}`}>
         <div className="total-patrimony-content">
           <div className="total-header">
-            <span className="net-label">PATRIMOINE NET</span>
+            <span className="net-label">PATRIMOINE</span>
             <div className="last-updated">
               Mise à jour: {portfolioSummary.lastUpdated.toLocaleDateString('fr-FR')}
             </div>
@@ -134,6 +149,19 @@ export function Dashboard({ onCategorySelect, selectedCategory }: DashboardProps
             <span className="perf-value">
               {isPositive ? '+' : ''}{formatValue(portfolioSummary.performance)}
             </span>
+          </div>
+
+          <div className="goal-progress-container">
+            <div className="goal-info">
+              <span>Objectif: {formatValue(patrimonyGoal)}</span>
+              <span>{progressPercent.toFixed(1)}%</span>
+            </div>
+            <div className="progress-bar-bg">
+              <div 
+                className="progress-bar-fill" 
+                style={{ width: `${progressPercent}%` }}
+              ></div>
+            </div>
           </div>
         </div>
       </div>

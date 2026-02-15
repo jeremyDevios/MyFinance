@@ -1,13 +1,11 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import type { AssetCategory, Asset } from '../types';
 import { CATEGORIES } from '../types';
 import { useAssets } from '../hooks/useAssets';
 import { usePrices } from '../hooks/usePrices';
 import { useCurrency } from '../hooks/useCurrency';
 import { useSettings } from '../contexts/SettingsContext';
-import { priceService } from '../services/priceService';
 import { AddAssetModal } from './AddAssetModal';
-import { exchangeRates } from '../data/sampleData';
 import './CategoryDetail.css';
 
 interface CategoryDetailProps {
@@ -17,8 +15,8 @@ interface CategoryDetailProps {
 
 export function CategoryDetail({ category, onClose }: CategoryDetailProps) {
   const { assets: allAssets, deleteAsset } = useAssets();
-  const { formatValue } = useCurrency();
-  const { finnhubApiKey, monthlyExpenses } = useSettings();
+  const { formatValue, exchangeRates } = useCurrency();
+  const { monthlyExpenses } = useSettings();
   const categoryInfo = CATEGORIES[category];
   
   // Memoize filtered assets to prevent infinite loops in usePrices
@@ -29,37 +27,49 @@ export function CategoryDetail({ category, onClose }: CategoryDetailProps) {
   const { prices, metadata, errors } = usePrices(assets);
   
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
-  const [currentExchangeRates, setCurrentExchangeRates] = useState(exchangeRates);
-
-  useEffect(() => {
-    const fetchExchangeRates = async () => {
-      try {
-        // Fetch EURUSD=X (1 EUR = x USD) -> We want 1 USD = y EUR
-        const usdResult = await priceService.getYahooPrice('EURUSD=X');
-        if (usdResult.price) {
-          setCurrentExchangeRates(prev => ({
-            ...prev,
-            USD: 1 / usdResult.price!
-          }));
-        }
-      } catch (e) {
-        console.warn('Failed to fetch live exchange rates', e);
-      }
-    };
-    fetchExchangeRates();
-  }, []);
 
   // Helper to get the effective price in EUR
   const getPriceInEur = (asset: Asset) => {
     let price = prices[asset.id] ?? ('currentPrice' in asset ? (asset as any).currentPrice : 0);
     const meta = metadata?.[asset.id];
+
+    // If we have metadata AND the asset currency matches metadata currency
+    // For Crypto, priceService now returns price in USD or EUR with metadata
+    // If the asset has an originalCurrency, we should assume the purchasePrice was in that currency.
+    // However, the current price from usePrices might be in a different currency.
     
-    // If we have metadata and the currency is not EUR, convert it
+    // Simplification:
+    // 1. priceService usually returns crypto in USD or EUR.
+    // 2. We want to convert everything to EUR for display uniformity in the portfolio.
+    
     if (meta?.currency && meta.currency !== 'EUR') {
-      const rate = currentExchangeRates[meta.currency];
+      const rate = exchangeRates[meta.currency];
       if (rate) {
         price = price * rate;
       }
+    }
+    return price;
+  };
+
+  // Helper to get purchase price in EUR
+  const getPurchasePriceInEur = (asset: Asset) => {
+    if (!('purchasePrice' in asset)) return 0;
+    
+    let price = asset.purchasePrice;
+    
+    // If asset was bought in another currency, convert it to EUR using PRESENT exchange rate?
+    // STRICTLY SPEAKING, to compute historical performance accurately in EUR, we should use the historical exchange rate.
+    // BUT we don't store historical exchange rates.
+    // So we have two options for invalid comparison:
+    // A) Convert purchase price to EUR using CURRENT rate (Simulates "What if I held EUR instead of USD") -> Shows asset performance + currency performance
+    // B) Don't convert, implies purchasePrice is already in EUR (WRONG if it was USD)
+    
+    // If the user selected a currency during creation:
+    if (asset.originalCurrency && asset.originalCurrency !== 'EUR') {
+       const rate = exchangeRates[asset.originalCurrency];
+       if (rate) {
+         price = price * rate;
+       }
     }
     return price;
   };
@@ -98,6 +108,7 @@ export function CategoryDetail({ category, onClose }: CategoryDetailProps) {
 
   const renderAssetDetails = (asset: Asset) => {
     const currentPrice = getPriceInEur(asset);
+    const purchasePrice = 'purchasePrice' in asset ? getPurchasePriceInEur(asset) : 0;
     const hasRealTimePrice = prices[asset.id] !== undefined && prices[asset.id] !== null;
     const priceError = errors[asset.id];
 
@@ -117,36 +128,48 @@ export function CategoryDetail({ category, onClose }: CategoryDetailProps) {
           </>
         );
       case 'stocks':
+        const diffVal = (currentPrice - purchasePrice) * asset.quantity;
         return (
           <>
-            <span className="detail-item">{asset.quantity} parts</span>
-            <span className="detail-item price-tag">
-              {currentPrice.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
+            <span className="detail-item col-quantity">{asset.quantity} parts</span>
+            <span className="detail-item price-tag col-price">
+              {formatValue(currentPrice)}
             </span>
             {priceError ? (
               <span className="detail-item error" title={`${priceError} - Vérifiez le symbole sur Finnhub.io`}>!</span>
             ) : (
-              <span className={`detail-item ${currentPrice >= asset.purchasePrice ? 'positive' : 'negative'}`}>
-                {((currentPrice - asset.purchasePrice) / asset.purchasePrice * 100).toFixed(1)}%
-                {hasRealTimePrice && <span className="live-indicator" title="Prix en temps réel">•</span>}
-              </span>
+              <>
+                <span className={`detail-item col-perf ${currentPrice >= purchasePrice ? 'positive' : 'negative'}`}>
+                  {purchasePrice > 0 ? ((currentPrice - purchasePrice) / purchasePrice * 100).toFixed(1) : 0}%
+                </span>
+                <span className={`detail-item col-gain ${diffVal >= 0 ? 'positive' : 'negative'}`}>
+                  {diffVal > 0 ? '+' : ''}{formatValue(diffVal)}
+                  {hasRealTimePrice && <span className="live-indicator" title="Prix en temps réel">•</span>}
+                </span>
+              </>
             )}
           </>
         );
       case 'crypto':
+        const diffInEur = (currentPrice - purchasePrice) * asset.quantity;
         return (
           <>
-            <span className="detail-item">{asset.quantity} unités</span>
-            <span className="detail-item price-tag">
-              {currentPrice.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
+            <span className="detail-item col-quantity">{asset.quantity} unités</span>
+            <span className="detail-item price-tag col-price">
+              {formatValue(currentPrice)}
             </span>
             {priceError ? (
               <span className="detail-item error" title={priceError}>!</span>
             ) : (
-              <span className={`detail-item ${currentPrice >= asset.purchasePrice ? 'positive' : 'negative'}`}>
-                {((currentPrice - asset.purchasePrice) / asset.purchasePrice * 100).toFixed(1)}%
-                {hasRealTimePrice && <span className="live-indicator" title="Prix en temps réel">•</span>}
-              </span>
+              <>
+                <span className={`detail-item col-perf ${currentPrice >= purchasePrice ? 'positive' : 'negative'}`}>
+                  {purchasePrice > 0 ? ((currentPrice - purchasePrice) / purchasePrice * 100).toFixed(1) : 0}%
+                </span>
+                <span className={`detail-item col-gain ${diffInEur >= 0 ? 'positive' : 'negative'}`}>
+                  {diffInEur > 0 ? '+' : ''}{formatValue(diffInEur)}
+                  {hasRealTimePrice && <span className="live-indicator" title="Prix en temps réel">•</span>}
+                </span>
+              </>
             )}
           </>
         );

@@ -1,7 +1,8 @@
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode, useEffect } from 'react';
 import type { Currency } from '../types';
-import { exchangeRates } from '../data/sampleData';
+import { exchangeRates as initialRates } from '../data/sampleData';
 import { CurrencyContext } from './currencyContextType';
+import { priceService } from '../services/priceService';
 
 const currencySymbols: Record<Currency, string> = {
   EUR: '€',
@@ -17,11 +18,31 @@ interface CurrencyProviderProps {
 
 export function CurrencyProvider({ children }: CurrencyProviderProps) {
   const [currency, setCurrency] = useState<Currency>('EUR');
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>(initialRates);
+
+  useEffect(() => {
+    const fetchExchangeRates = async () => {
+      try {
+        // Fetch EURUSD=X (1 EUR = x USD) -> We need 1 USD = y EUR
+        const usdResult = await priceService.getYahooPrice('EURUSD=X');
+        if (usdResult.price) {
+          setExchangeRates(prev => ({
+            ...prev,
+            USD: 1 / usdResult.price!
+          }));
+        }
+      } catch (e) {
+        console.warn('Failed to fetch live exchange rates', e);
+      }
+    };
+    fetchExchangeRates();
+  }, []);
 
   const convertFromEur = (valueInEur: number): number => {
     if (currency === 'EUR') return valueInEur;
-    // Convert EUR to target currency
+    // Convert EUR to target currency (rate is value in EUR of 1 unit of target currency)
     const rate = exchangeRates[currency];
+    if (!rate) return valueInEur; // Fallback
     return valueInEur / rate;
   };
 
@@ -46,6 +67,7 @@ export function CurrencyProvider({ children }: CurrencyProviderProps) {
       value={{
         currency,
         setCurrency,
+        exchangeRates,
         convertFromEur,
         formatValue,
         getSymbol,

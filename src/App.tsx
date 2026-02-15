@@ -41,6 +41,17 @@ function App() {
     }
   }, []);
 
+  useEffect(() => {
+    if (selectedCategory) {
+      setTimeout(() => {
+        const element = document.getElementById('category-detail-section');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  }, [selectedCategory]);
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -91,12 +102,14 @@ function App() {
               onCategorySelect={setSelectedCategory}
               selectedCategory={selectedCategory}
             />
-            {selectedCategory && (
-              <CategoryDetail
-                category={selectedCategory}
-                onClose={() => setSelectedCategory(null)}
-              />
-            )}
+            <div id="category-detail-section">
+              {selectedCategory && (
+                <CategoryDetail
+                  category={selectedCategory}
+                  onClose={() => setSelectedCategory(null)}
+                />
+              )}
+            </div>
           </main>
           <Settings isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
         </div>

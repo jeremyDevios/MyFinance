@@ -8,6 +8,8 @@ interface SettingsContextType {
   setFinnhubApiKey: (key: string) => Promise<void>;
   monthlyExpenses: number;
   setMonthlyExpenses: (amount: number) => Promise<void>;
+  patrimonyGoal: number;
+  setPatrimonyGoal: (amount: number) => Promise<void>;
   loading: boolean;
 }
 
@@ -43,6 +45,7 @@ const decrypt = (encoded: string) => {
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [finnhubApiKey, setFinnhubApiKeyState] = useState('');
   const [monthlyExpenses, setMonthlyExpensesState] = useState(0);
+  const [patrimonyGoal, setPatrimonyGoalState] = useState(100000);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -63,6 +66,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             if (data.monthlyExpenses) {
               setMonthlyExpensesState(Number(data.monthlyExpenses));
             }
+            if (data.patrimonyGoal) {
+              setPatrimonyGoalState(Number(data.patrimonyGoal));
+            }
           } else {
             // If not in DB, check localStorage (migration)
             const storedKey = localStorage.getItem('finnhub_api_key');
@@ -82,6 +88,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setUserId(null);
         setFinnhubApiKeyState('');
         setMonthlyExpensesState(0);
+        setPatrimonyGoalState(100000);
       }
       setLoading(false);
     });
@@ -124,8 +131,23 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const setPatrimonyGoal = async (amount: number) => {
+    setPatrimonyGoalState(amount);
+    
+    if (userId) {
+      try {
+        await setDoc(doc(db, `users/${userId}/settings/config`), {
+          patrimonyGoal: amount,
+          updatedAt: new Date()
+        }, { merge: true });
+      } catch (error) {
+        console.error("Error saving patrimony goal:", error);
+      }
+    }
+  };
+
   return (
-    <SettingsContext.Provider value={{ finnhubApiKey, setFinnhubApiKey, monthlyExpenses, setMonthlyExpenses, loading }}>
+    <SettingsContext.Provider value={{ finnhubApiKey, setFinnhubApiKey, monthlyExpenses, setMonthlyExpenses, patrimonyGoal, setPatrimonyGoal, loading }}>
       {children}
     </SettingsContext.Provider>
   );

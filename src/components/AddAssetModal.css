@@ -4,7 +4,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(5px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -15,31 +16,35 @@
 .form-group textarea {
   width: 100%;
   padding: 0.75rem;
-  background-color: #2b2b40;
-  border: 1px solid #3a3a4e;
-  border-radius: 6px;
-  color: white;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
   font-size: 1rem;
   resize: vertical;
   font-family: inherit;
+  transition: border-color 0.2s;
 }
 
 .form-group textarea:focus {
   outline: none;
-  border-color: #646cff;
+  border-color: var(--accent-primary);
 }
 
 .modal-content {
-  background-color: #1e1e2d;
+  background-color: var(--bg-secondary);
   padding: 2rem;
-  border-radius: 12px;
+  border-radius: 24px;
   width: 90%;
   max-width: 500px;
-  max-height: 90vh;
+  /* Removed max-height constraint to allow modal to grow */
+  /* max-height: 90vh; */ 
+  height: auto;
   overflow-y: visible; /* Changed from auto to visible to allow dropdowns to overflow */
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--card-shadow);
   position: relative; /* Ensure z-index context */
   margin: 2rem 0; /* Add margin to prevent touching edges when scrolling */
+  border: 1px solid var(--border-color);
 }
 
 .modal-header {
@@ -50,14 +55,14 @@
 }
 
 .modal-header h2 {
-  color: white;
+  color: var(--text-primary);
   font-size: 1.5rem;
 }
 
 .close-button {
   background: none;
   border: none;
-  color: #a0a0b0;
+  color: var(--text-secondary);
   font-size: 2rem;
   cursor: pointer;
   padding: 0;
@@ -65,7 +70,7 @@
 }
 
 .close-button:hover {
-  color: white;
+  color: var(--text-primary);
 }
 
 .form-group {
@@ -75,7 +80,7 @@
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #a0a0b0;
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
@@ -83,17 +88,19 @@
 .form-group select {
   width: 100%;
   padding: 0.75rem;
-  background-color: #2b2b40;
-  border: 1px solid #3a3a4e;
-  border-radius: 6px;
-  color: white;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
   font-size: 1rem;
+  transition: all 0.2s;
 }
 
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #646cff;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(255, 159, 10, 0.2);
 }
 
 .value-input-group {
@@ -128,18 +135,21 @@
 }
 
 .btn-primary {
-  background-color: #646cff;
-  color: white;
+  background: var(--accent-gradient);
+  color: #000;
   border: none;
+  font-weight: 600;
 }
 
 .btn-primary:hover {
-  background-color: #535bf2;
+  background: var(--accent-secondary);
 }
 
 .btn-primary:disabled {
-  opacity: 0.7;
+  opacity: 0.5;
   cursor: not-allowed;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
 }
 
 .suggestions-list {
@@ -147,8 +157,8 @@
   top: 100%;
   left: 0;
   right: 0;
-  background-color: #2b2b40;
-  border: 1px solid #3a3a4e;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 0 0 6px 6px;
   max-height: 200px;
   overflow-y: auto;
@@ -156,14 +166,14 @@
   list-style: none;
   padding: 0;
   margin: 0;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--card-shadow);
 }
 
 .suggestion-item {
   padding: 0.75rem;
   cursor: pointer;
-  color: white;
-  border-bottom: 1px solid #3a3a4e;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
   transition: background-color 0.2s;
 }
 
@@ -172,5 +182,6 @@
 }
 
 .suggestion-item:hover {
-  background-color: #3a3a4e;
+  background-color: rgba(255, 159, 10, 0.1);
+  color: var(--accent-primary);
 }

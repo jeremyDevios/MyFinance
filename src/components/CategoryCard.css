@@ -1,12 +1,13 @@
 .category-card {
-  background: #1e1e2e;
+  background: var(--bg-secondary);
   border-radius: 16px;
   padding: 1.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
   position: relative;
   overflow: hidden;
+  box-shadow: var(--card-shadow);
 }
 
 .category-card.card-gradient-green {

@@ -12,9 +12,17 @@ interface SettingsProps {
 
 export function Settings({ isOpen, onClose }: SettingsProps) {
   const { currency, setCurrency } = useCurrency();
-  const { finnhubApiKey, setFinnhubApiKey, monthlyExpenses, setMonthlyExpenses } = useSettings();
+  const { 
+    finnhubApiKey, 
+    setFinnhubApiKey, 
+    monthlyExpenses, 
+    setMonthlyExpenses,
+    patrimonyGoal,
+    setPatrimonyGoal
+  } = useSettings();
   const [localKey, setLocalKey] = useState(finnhubApiKey);
   const [localExpenses, setLocalExpenses] = useState(String(monthlyExpenses));
+  const [localGoal, setLocalGoal] = useState(String(patrimonyGoal));
 
   useEffect(() => {
     setLocalKey(finnhubApiKey);
@@ -23,6 +31,10 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
   useEffect(() => {
     setLocalExpenses(String(monthlyExpenses));
   }, [monthlyExpenses]);
+
+  useEffect(() => {
+    setLocalGoal(String(patrimonyGoal));
+  }, [patrimonyGoal]);
 
   const handleSaveKey = async () => {
     await setFinnhubApiKey(localKey);
@@ -34,6 +46,16 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
     if (!isNaN(amount) && amount >= 0) {
       await setMonthlyExpenses(amount);
       alert('Dépenses mensuelles sauvegardées !');
+    } else {
+      alert('Veuillez entrer un montant valide.');
+    }
+  };
+
+  const handleSaveGoal = async () => {
+    const amount = parseFloat(localGoal);
+    if (!isNaN(amount) && amount > 0) {
+      await setPatrimonyGoal(amount);
+      alert('Objectif de patrimoine sauvegardé !');
     } else {
       alert('Veuillez entrer un montant valide.');
     }
@@ -89,6 +111,26 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
                 min="0"
               />
               <button onClick={handleSaveExpenses} className="save-button">
+                Sauvegarder
+              </button>
+            </div>
+          </div>
+
+          <div className="setting-group">
+            <label className="setting-label">Objectif de Patrimoine</label>
+            <p className="setting-description">
+              Définissez votre objectif de patrimoine net pour suivre votre progression.
+            </p>
+            <div className="api-input-group">
+              <input 
+                type="number" 
+                value={localGoal} 
+                onChange={(e) => setLocalGoal(e.target.value)}
+                placeholder="100000"
+                className="api-key-input"
+                min="0"
+              />
+              <button onClick={handleSaveGoal} className="save-button">
                 Sauvegarder
               </button>
             </div>

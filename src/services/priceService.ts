@@ -98,8 +98,19 @@ export const priceService = {
 
     // 1. Try CryptoCompare (Fast, CORS friendly, supports EUR)
     try {
-      const res = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${cleanSymbol}&tsyms=EUR`);
+      const res = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${cleanSymbol}&tsyms=USD,EUR`);
       const data = await res.json();
+      
+      // Prefer USD if available
+      if (data.USD) {
+        const price = data.USD;
+        // Check if we also have EUR to deduce an implied rate? 
+        // No, better to stick to one currency and handle conversion consistently elsewhere.
+        const metadata: StockMetadata = { currency: 'USD', instrumentType: 'CRYPTOCURRENCY' };
+        priceCache[cacheKey] = { price, timestamp: Date.now(), metadata };
+        return { price, metadata };
+      }
+
       if (data.EUR) {
         const price = data.EUR;
         const metadata: StockMetadata = { currency: 'EUR', instrumentType: 'CRYPTOCURRENCY' };
@@ -154,13 +165,21 @@ export const priceService = {
 
       if (!id) return { price: null, error: 'Symbol not found' };
 
-      const data = await fetchWithProxy(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=eur`);
+      const data = await fetchWithProxy(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd,eur`);
       
-      if (data[id] && data[id].eur) {
-        const price = data[id].eur;
-        const metadata: StockMetadata = { currency: 'EUR', instrumentType: 'CRYPTOCURRENCY' };
-        priceCache[cacheKey] = { price, timestamp: Date.now(), metadata };
-        return { price, metadata };
+      if (data[id]) {
+        if (data[id].usd) {
+          const price = data[id].usd;
+          const metadata: StockMetadata = { currency: 'USD', instrumentType: 'CRYPTOCURRENCY' };
+          priceCache[cacheKey] = { price, timestamp: Date.now(), metadata };
+          return { price, metadata };
+        }
+        if (data[id].eur) {
+          const price = data[id].eur;
+          const metadata: StockMetadata = { currency: 'EUR', instrumentType: 'CRYPTOCURRENCY' };
+          priceCache[cacheKey] = { price, timestamp: Date.now(), metadata };
+          return { price, metadata };
+        }
       }
       
       return { price: null, error: 'Price not found' };

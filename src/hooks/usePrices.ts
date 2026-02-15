@@ -7,20 +7,38 @@ export function usePrices(assets: Asset[]) {
   const [prices, setPrices] = useState<Record<string, number | null>>({});
   const [metadata, setMetadata] = useState<Record<string, StockMetadata>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(true); // Start as loading until first fetch
+  const [loading, setLoading] = useState(true); 
   const { finnhubApiKey } = useSettings();
 
   // Create a stable key for assets to prevent infinite loops
   const assetsKey = JSON.stringify(assets.map(a => {
+    // Include lastUpdated to force refresh if asset is edited
+    // But exclude it normally to avoid refresh loops if we were updating asset timestamps
+    // Here we only care about identity essential for pricing
     if (a.category === 'stocks') return `stock:${(a as any).ticker}`;
     if (a.category === 'crypto') return `crypto:${(a as any).symbol}`;
     return a.id;
   }));
 
+  // Determine if we actually have assets that need pricing
+  const hasPricedAssets = assets.some(a => 
+    (a.category === 'stocks' && (a as any).isListed !== false) || 
+    a.category === 'crypto'
+  );
+
   useEffect(() => {
+    if (!hasPricedAssets) {
+      setLoading(false);
+      return;
+    }
+
     const fetchPrices = async () => {
       // Don't set loading to true on background refreshes to avoid UI flickering
-      // Only set it if we have no prices yet
+      // But ensure it starts as true on first mount or significant changes
+      // Actually, we should probably only set it to true if we don't have prices for the CURRENT assets yet.
+      // But since we are fetching based on assetsKey, let's keep it simple.
+      // If we have cached prices, maybe don't show loading? 
+      // Current implementation: only set true if prices state is empty.
       if (Object.keys(prices).length === 0) {
         setLoading(true);
       }
@@ -33,34 +51,46 @@ export function usePrices(assets: Asset[]) {
       const cryptoAssets = assets.filter(a => a.category === 'crypto');
       const stockAssets = assets.filter(a => a.category === 'stocks');
 
-      // Fetch Crypto Prices
-      for (const asset of cryptoAssets) {
-        if ('symbol' in asset) {
-          const result = await priceService.getCryptoPrice(asset.symbol);
-          if (result.price !== null) {
-            newPrices[asset.id] = result.price;
-            if (result.metadata) newMetadata[asset.id] = result.metadata;
-          } else if (result.error) {
-            newErrors[asset.id] = result.error;
+      try {
+        // Fetch Crypto Prices
+        for (const asset of cryptoAssets) {
+          if ('symbol' in asset) {
+            try {
+              const result = await priceService.getCryptoPrice(asset.symbol);
+              if (result.price !== null) {
+                newPrices[asset.id] = result.price;
+                if (result.metadata) newMetadata[asset.id] = result.metadata;
+              } else if (result.error) {
+                newErrors[asset.id] = result.error;
+              }
+            } catch (e) {
+              console.error(`Error fetching crypto ${asset.symbol}`, e);
+            }
           }
         }
-      }
 
-      // Fetch Stock Prices
-      for (const asset of stockAssets) {
-        // Skip unlisted stocks (manual update)
-        if ((asset as any).isListed === false) continue;
+        // Fetch Stock Prices
+        for (const asset of stockAssets) {
+          // Skip unlisted stocks (manual update)
+          if ((asset as any).isListed === false) continue;
 
-        if ('ticker' in asset) {
-          // We now allow fetching without a key (will use Yahoo fallback)
-          const result = await priceService.getStockPrice(asset.ticker, finnhubApiKey);
-          if (result.price !== null) {
-            newPrices[asset.id] = result.price;
-            if (result.metadata) newMetadata[asset.id] = result.metadata;
-          } else if (result.error) {
-            newErrors[asset.id] = result.error;
+          if ('ticker' in asset) {
+            try {
+              // We now allow fetching without a key (will use Yahoo fallback)
+              const result = await priceService.getStockPrice(asset.ticker, finnhubApiKey);
+              if (result.price !== null) {
+                newPrices[asset.id] = result.price;
+                if (result.metadata) newMetadata[asset.id] = result.metadata;
+              } else if (result.error) {
+                newErrors[asset.id] = result.error;
+              }
+            } catch (e) {
+              console.error(`Error fetching stock ${asset.ticker}`, e);
+            }
           }
         }
+      } catch (globalError) {
+        console.error("Global error in fetchPrices", globalError);
       }
 
       setPrices(prev => ({ ...prev, ...newPrices }));
@@ -69,15 +99,12 @@ export function usePrices(assets: Asset[]) {
       setLoading(false);
     };
 
-    if (assets.length > 0) {
-      fetchPrices();
-      
-      // Refresh prices every 10 seconds
-      const intervalId = setInterval(fetchPrices, 10000);
-      return () => clearInterval(intervalId);
-    } else {
-      setLoading(false);
-    }
+    fetchPrices();
+    
+    // Refresh prices every 10 seconds
+    const intervalId = setInterval(fetchPrices, 10000);
+    return () => clearInterval(intervalId);
+
   }, [assetsKey, finnhubApiKey]); // Use stable key instead of assets array
 
   return { prices, metadata, errors, loading };
